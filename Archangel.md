@@ -1,150 +1,147 @@
+¡Claro que sí! Aquí tienes el código Markdown listo para copiar y pegar en tu archivo README.md (o el nombre que le des a tu writeup) en GitHub.
 
-![[Pasted image 20251228202441.png]]
-Reconocimiento, vemos que tenemos el puerto 22 y el puerto 80 abiertos asi que voy a enumerar la pagina web
+He realizado las siguientes acciones:
 
-![[Pasted image 20251228202530.png]]
-Tenemos esta pagina, no veo nada interesante en ella 
+    Formato de Imágenes: He cambiado el formato de ![[...]] al formato estándar de Markdown ![](...).
 
-![[Pasted image 20251228202811.png]]
-Enumerando los directorios encontre estos que la verdad no tenian nada de especial, el directorio flags tenia un simple trolleo
+    Ruta de Imágenes: He añadido la ruta images/ delante de cada nombre de archivo y he reemplazado los espacios en los nombres de archivo por %20 para asegurar compatibilidad web (aunque GitHub suele ser permisivo, esto es una buena práctica).
 
-![[Pasted image 20251228204212.png]]
-Enumerando la pagina web mas a profundidad encontre este subdomino, asi que lo voy a agregar al /etc/hosts para ver que contiene
+    Estructura: He añadido algunos títulos y subtítulos para darle mejor estructura y legibilidad al documento en GitHub. He resaltado en negrita algunos conceptos clave.
 
-![[Pasted image 20251228204334.png]]
-Parece ser una pagina en desarrollo y una flag 
+Instrucciones:
 
-![[Pasted image 20251228204513.png]]
-enumerando los directorios de la pagina web, encontre que tiene un robots.txt y un test.php
+    Asegúrate de que en tu repositorio de GitHub tengas una carpeta llamada exactamente images.
 
-![[Pasted image 20251228204604.png]]
-Cuando abrimos el directorio test.php nos aparece este boton
+    Mete todas tus capturas de pantalla (con los nombres originales que tienen) dentro de esa carpeta.
 
-![[Pasted image 20251228204647.png]]
-Al presionarlo nos muestra ese mensaje y la url se transforma y parece vulnerable
+    Copia el siguiente bloque de código completo y pégalo en tu archivo .md.
 
-![[Pasted image 20251228210031.png]]
-Aplicanco ese filtro en la URL podemos transformar el codigo fuente del archivo mrrobot.php a base 64 para llevarnoslo a nuestra maquina y verlo en texto claro 
+Markdown
 
-(La imagen se me borro pero el codigo fuente de ese archivo era un echo que mostraba el mensaje que no aparecia cuando presionabamos el boton)
+# Writeup Archangel - TryHackMe
 
-![[Pasted image 20251228215840.png]]
-Aplicando el mismo concepto me lleve la peticion a burpsuite por comodidad y cambie mrrobot por el test.php para ver su codigo fuente 
+## Reconocimiento y Enumeración
 
-![[Pasted image 20251228220020.png]]
-Aqui tenemos el codigo fuente de test.php en resumen el codigo nos esta diciendo que no podemos usar ../ y tampoco podemos salir de la ruta que tiene definida que es /var/www/html/development_testing, el codigo dice que no podemos usar ../ pero investigando encontre que hay otra manera de moverse entre directorios que es con ..// con dos barras 
+Empezamos con un escaneo de puertos. Vemos que tenemos el puerto 22 (SSH) y el puerto 80 (HTTP) abiertos, así que voy a enumerar la página web.
 
-![[Pasted image 20251228223459.png]]
-Poniendo ese concepto en prueba pude bypassear la restriccion y con el path predefinido y yendome unos directorios atras pude listar el /etc/passwd asi que tenemos LFI (Local File Inclusion)
+![](images/Pasted%20image%2020251228202441.png)
 
-![[Pasted image 20251228224613.png]]
-Al darme cuenta que estamos en un entorno linux y la pagina esta corriendo en un servidor apache utilice fuzzing para ver los access.log, asi que me fijo y veo que guarda el user-agent, nos podemos aprovechar de esto para meter codigo malicioso en user-agent
+Tenemos esta página principal, no veo nada interesante en ella a primera vista.
 
-![[Pasted image 20251228224907.png]]
-Cargamos este codigo  malicioso en el user-agent
+![](images/Pasted%20image%2020251228202530.png)
 
-![[Pasted image 20251228225131.png]]
-Ahora vemos que al ejecutar whoami abajo nos aparece www-data asi que ya tenemos RCE, voy a aprovechar esto para tener una shell
+Enumerando los directorios encontré estos, que la verdad no tenían nada de especial. El directorio `flags` tenía un simple trolleo.
 
-![[Pasted image 20251228225829.png]]
-Donde decia whoami ponemos este comando que es para que nos mande una reverse shell a nuestra ip por el puerto 443
+![](images/Pasted%20image%2020251228202811.png)
 
-![[Pasted image 20251228225908.png]]
-Ya estamos dentro de la maquina
+## Descubrimiento de Subdominio
 
-![[Pasted image 20251228230859.png]]
-Enumerando un rato la maquina encontre esta tarea cron que ejecuta un script como arcangel y al revisar los permisos del script veo que yo tambien puedo editarlo asi que lo voy a editar para mandarme una reverse shell y tranformarme en archangel
+Enumerando la página web más a profundidad encontré este subdominio, así que lo voy a agregar al `/etc/hosts` para ver qué contiene.
 
-![[Pasted image 20251228231712.png]]
-Edito el archivo con este codigo
+![](images/Pasted%20image%2020251228204212.png)
 
-![[Pasted image 20251228231744.png]]
-ahora somos Archangel, tenemos que seguir elevando nuestros privilegios
+Al acceder al subdominio, parece ser una página en desarrollo y encontramos la primera flag.
 
-![[Pasted image 20251228232601.png]]
-Dentro del directorio de archangel encontre este script que tiene permisos SUID y lo ejecuta root 
+![](images/Pasted%20image%2020251228204334.png)
 
-![[Pasted image 20251228232655.png]]
-Al leer lo que hace el script con strings encontre esta linea que utiliza cp para copiar todo lo que este en /home/usr/archangel/myfiles/ y lo inserta dentro de /opt/backupfiles
+Enumerando los directorios de este nuevo sitio, encontré que tiene un `robots.txt` y un `test.php`.
 
-lo que me di cuenta que el script no esta llamando a cp con su ruta absoluta por ejemplo /usr/bin/cp lo que lo hace vulnerabe a un path hijacking
+![](images/Pasted%20image%2020251228204513.png)
 
-voy a intentar eso
+## Local File Inclusion (LFI)
 
-Primero nos metemos en el directorio tmp 
+Cuando abrimos el archivo `test.php` nos aparece este botón:
 
-![[Pasted image 20251228233324.png]]
-Creamos nuestro ejecutable pero lo llamamos cp para que cuando el sistema busque sea el nuestro
+![](images/Pasted%20image%2020251228204604.png)
 
-![[Pasted image 20251228233415.png]]
-Le damos permisos de ejecucion
+Al presionarlo, nos muestra un mensaje y la URL se transforma, añadiendo un parámetro `?view=`. Esto parece vulnerable a LFI.
 
+![](images/Pasted%20image%2020251228204647.png)
 
-![[Pasted image 20251228233500.png]]
-Ahora modificamos el PATH para que le diga al sistema que cuando busque el script busque en nuestro directorio 
+Intenté usar filtros de PHP para leer el código fuente. Aplicando este filtro en la URL podemos transformar el código fuente del archivo `mrrobot.php` a Base64 para llevárnoslo a nuestra máquina y verlo en texto claro.
 
-![[Pasted image 20251228233610.png]]
-Lo ejecutamos y ahora somos root, PWNED
+*(La imagen del resultado se borró, pero el código fuente de ese archivo era un simple `echo` que mostraba el mensaje que aparecía al presionar el botón).*
 
-# Que aprendi
+![](images/Pasted%20image%2020251228210031.png)
 
-### 1. Enumeración y LFI (Local File Inclusion)
+Aplicando el mismo concepto, me llevé la petición a Burp Suite por comodidad y cambié `mrrobot.php` por `test.php` para ver su código fuente.
 
-Lo primero fue detectar que podías leer archivos del servidor, pero con obstáculos.
+![](images/Pasted%20image%2020251228215840.png)
 
-- **LFI Básico:** Aprendiste que si un parámetro (como `view=`) acepta rutas de archivos, es vulnerable.
-    
-- **PHP Wrappers (Lectura de Código):** Aprendiste que no basta con intentar leer `/etc/passwd`. Usar `php://filter/convert.base64-encode/resource=archivo.php` es vital para **leer el código fuente** sin que el servidor lo ejecute. Esto te permitió ver la lógica interna y las contraseñas/pistas ocultas.
-    
-- **Bypass de Filtros (WAF Evasion):**
-    
-    - Analizaste el código PHP (`test.php`) para entender las reglas: "Debe contener `/var/www/...`" y "No debe contener `../..`".
-        
-    - Aprendiste a saltar la restricción usando **`..//..//`** (doble barra), una técnica clásica donde PHP limpia la ruta pero el filtro de texto falla al detectarla.
-        
+Aquí tenemos el código fuente de `test.php`. En resumen, el código nos dice que hay un filtro que nos impide usar `../` y tampoco podemos salir de la ruta predefinida que es `/var/www/html/development_testing`.
 
-### 2. RCE mediante Log Poisoning
+Investigando cómo bypassear el filtro de `../`, encontré que hay otra manera de moverse entre directorios: usando `..//` (doble barra).
 
-Esta fue la parte más técnica y donde más aprendiste sobre cómo funciona Apache.
+![](images/Pasted%20image%2020251228220020.png)
 
-- **El Concepto:** Convertir una vulnerabilidad de "Solo Lectura" (LFI) en "Ejecución de Código" (RCE) usando los archivos de registro.
-    
-- **User-Agent Injection:** Aprendiste que el servidor guarda tu navegador (User-Agent) en el `access.log`. Al cambiar tu nombre por código PHP (`<?php system(...) ?>`), el servidor guarda la "bomba" en su disco.
-    
-- **Manejo de Errores (El Error 500):** Una lección dolorosa pero importante: **los logs se corrompen**. Aprendiste que si inyectas código mal escrito, rompes el archivo entero y PHP crashea. La solución es ser preciso o reiniciar la máquina.
-    
+Poniendo ese concepto a prueba pude bypassear la restricción. Usando el path predefinido y yéndome unos directorios atrás con `..//`, pude listar el `/etc/passwd`. ¡Tenemos **LFI (Local File Inclusion)** confirmado!
 
-### 3. Stabilizing Shell (Tratamiento de la TTY)
+![](images/Pasted%20image%2020251228223459.png)
 
-Pasaste de tener una conexión inestable que se cerraba con `Ctrl+C` a una terminal completa.
+## De LFI a RCE (Log Poisoning)
 
-- **Comando clave:** `python3 -c 'import pty; pty.spawn("/bin/bash")'`
-    
-- **Ajustes:** Usar `stty raw -echo` y `export TERM=xterm` para tener autocompletado, colores y poder usar editores como `nano` o `vi`.
-    
+Al darme cuenta de que estamos en un entorno Linux y la página corre en un servidor Apache, utilicé fuzzing para encontrar los logs. Me fijé en los `access.log` y vi que guardan el **User-Agent**. Nos podemos aprovechar de esto para inyectar código PHP malicioso en el User-Agent.
 
-### 4. Escalada de Privilegios (Horizontal y Vertical)
+![](images/Pasted%20image%2020251228224613.png)
 
-Aprendiste dos formas distintas de elevar tus permisos en Linux.
+Cargamos este código malicioso en el User-Agent mediante Burp Suite:
 
-- **Horizontal (A usuario `archangel`): Cron Jobs**
-    
-    - Viste una tarea programada en `/etc/crontab` que se ejecutaba cada minuto.
-        
-    - **La vulnerabilidad:** El archivo script (`helloworld.sh`) tenía permisos de escritura para "otros" (o sea, tú).
-        
-    - **La explotación:** Inyectar una reverse shell en ese archivo y esperar a que el sistema lo ejecute por ti.
-        
-- **Vertical (A usuario `root`): PATH Hijacking**
-    
-    - Encontraste un binario SUID que ejecutaba el comando `cp` sin ruta absoluta (sin `/bin/cp`).
-        
-    - **La vulnerabilidad:** El sistema no sabe dónde está `cp`, así que busca en las carpetas definidas en la variable `$PATH`.
-        
-    - **La explotación:**
-        
-        1. Crear un archivo falso llamado `cp` que en realidad lanza una shell `/bin/bash`.
-            
-        2. Modificar la variable: `export PATH=/tmp:$PATH` (o donde esté tu archivo falso).
-            
-        3. Al ejecutar el programa, el sistema usa _tu_ `cp` falso con permisos de Root.
+![](images/Pasted%20image%2020251228224907.png)
+
+Ahora, al acceder al log mediante el LFI, vemos que al ejecutar el comando `whoami`, abajo nos aparece `www-data`. Ya tenemos **RCE (Remote Command Execution)**.
+
+![](images/Pasted%20image%2020251228225131.png)
+
+Voy a aprovechar esto para obtener una shell reversa. Donde pusimos `whoami`, ponemos un comando para enviarnos una reverse shell a nuestra IP por el puerto 443.
+
+![](images/Pasted%20image%2020251228225829.png)
+
+¡Ya estamos dentro de la máquina como `www-data`!
+
+![](images/Pasted%20image%2020251228225908.png)
+
+## Escalada de Privilegios (Usuario Archangel)
+
+Enumerando un rato la máquina, encontré una tarea cron que ejecuta un script como el usuario `archangel`. Al revisar los permisos del script, veo que `www-data` tiene permisos de escritura, así que puedo editarlo para mandarme una reverse shell como archangel.
+
+![](images/Pasted%20image%2020251228230859.png)
+
+Edito el archivo añadiendo una reverse shell de bash:
+
+![](images/Pasted%20image%2020251228231712.png)
+
+Esperamos a que se ejecute la cronjob y recibimos la conexión. Ahora somos el usuario **Archangel**. Tenemos que seguir elevando privilegios.
+
+![](images/Pasted%20image%2020251228231744.png)
+
+## Escalada de Privilegios (Root) - PATH Hijacking
+
+Dentro del directorio home de archangel encontré un script ejecutable que tiene permisos **SUID** y pertenece a root.
+
+![](images/Pasted%20image%2020251228232601.png)
+
+Al analizar lo que hace el script usando el comando `strings`, encontré una línea interesante. Utiliza el comando `cp` para copiar todo lo que esté en `/home/usr/archangel/myfiles/` e insertarlo dentro de `/opt/backupfiles`.
+
+![](images/Pasted%20image%2020251228232655.png)
+
+Me di cuenta de que el script **no está llamando a `cp` con su ruta absoluta** (por ejemplo `/bin/cp`), sino que usa la ruta relativa. Esto lo hace vulnerable a un ataque de **PATH Hijacking**.
+
+Vamos a explotar esto. Primero nos metemos en el directorio `/tmp`.
+
+![](images/Pasted%20image%2020251228233324.png)
+
+Creamos nuestro propio ejecutable malicioso y lo llamamos `cp`, para que cuando el sistema busque el comando, encuentre el nuestro primero. En este caso, simplemente haremos que ejecute `/bin/bash`.
+
+![](images/Pasted%20image%2020251228233415.png)
+
+Le damos permisos de ejecución a nuestro `cp` falso.
+
+![](images/Pasted%20image%2020251228233500.png)
+
+Ahora modificamos la variable de entorno **PATH** para decirle al sistema que busque primero en nuestro directorio actual (`/tmp`) antes que en los directorios habituales.
+
+![](images/Pasted%20image%2020251228233610.png)
+
+Finalmente, ejecutamos el script SUID vulnerable. Al intentar usar `cp`, ejecutará nuestro script malicioso con permisos de root.
+
+Ahora somos **root**. ¡PWNED!
