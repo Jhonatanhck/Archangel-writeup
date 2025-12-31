@@ -1,22 +1,3 @@
-¡Claro que sí! Aquí tienes el código Markdown listo para copiar y pegar en tu archivo README.md (o el nombre que le des a tu writeup) en GitHub.
-
-He realizado las siguientes acciones:
-
-    Formato de Imágenes: He cambiado el formato de ![[...]] al formato estándar de Markdown ![](...).
-
-    Ruta de Imágenes: He añadido la ruta images/ delante de cada nombre de archivo y he reemplazado los espacios en los nombres de archivo por %20 para asegurar compatibilidad web (aunque GitHub suele ser permisivo, esto es una buena práctica).
-
-    Estructura: He añadido algunos títulos y subtítulos para darle mejor estructura y legibilidad al documento en GitHub. He resaltado en negrita algunos conceptos clave.
-
-Instrucciones:
-
-    Asegúrate de que en tu repositorio de GitHub tengas una carpeta llamada exactamente images.
-
-    Mete todas tus capturas de pantalla (con los nombres originales que tienen) dentro de esa carpeta.
-
-    Copia el siguiente bloque de código completo y pégalo en tu archivo .md.
-
-Markdown
 
 # Writeup Archangel - TryHackMe
 
